@@ -1,5 +1,10 @@
 # babel-plugin-import
 
+continuation of [umijs/babel-plugin-import](https://github.com/umijs/babel-plugin-import#customName), which no longer accepr PRs
+
+See below for new changes
+
+
 Modular import plugin for babel, compatible with [antd](https://github.com/ant-design/ant-design), [antd-mobile](https://github.com/ant-design/ant-design-mobile), lodash, [material-ui](http://material-ui.com/), and so on.
 
 [![NPM version](https://img.shields.io/npm/v/babel-plugin-import.svg?style=flat)](https://npmjs.org/package/babel-plugin-import)
