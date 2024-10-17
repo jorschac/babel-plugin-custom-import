@@ -110,6 +110,7 @@ export default class Plugin {
     const pluginState = this.getPluginState(state);
     // 模块名称到本地别名的映射
     pluginState.specified = Object.create(null);
+    // 默认导入模块的字典
     pluginState.libraryObjs = Object.create(null);
     // 指定导入的模块到解析后的导入路径的映射
     pluginState.selectedMethods = Object.create(null);
@@ -146,6 +147,8 @@ export default class Plugin {
       const path = winPath(
         this.customName
           ? this.customName(methodName, file)
+          // 否则的话，按照${libraryName}/${libraryDirectory}/${拼接后的模版导出文件的名字}/${fileName}来拼接导入路径，例如：
+          // lodash/lib/debounce
           : join(this.libraryName, libraryDirectory, transformedMethodName, this.fileName), // eslint-disable-line
       );
       // @TODO: 需要改成默认FALSE?
@@ -244,8 +247,10 @@ export default class Plugin {
       node.specifiers.forEach(spec => {
         // 注册
         if (types.isImportSpecifier(spec)) {
+          // 具名导入
           pluginState.specified[spec.local.name] = spec.imported.name;
         } else {
+          // 默认导入和其他
           pluginState.libraryObjs[spec.local.name] = true;
         }
       });
@@ -262,10 +267,12 @@ export default class Plugin {
 
     if (types.isIdentifier(node.callee)) {
       if (pluginState.specified[name]) {
+        // 替换节点的callee为转译后的导入语句
         node.callee = this.importMethod(pluginState.specified[name], file, pluginState);
       }
     }
 
+    // 检查函数调用的参数是否也是导入的，是的话重复上述逻辑，多用于嵌套组件
     node.arguments = node.arguments.map(arg => {
       const { name: argName } = arg;
       if (
