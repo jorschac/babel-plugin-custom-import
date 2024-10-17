@@ -5,7 +5,7 @@ import { addSideEffect, addDefault, addNamed } from '@babel/helper-module-import
  * 驼峰 -> 分隔符
  * @param {*} _str 驼峰
  * @param {*} symbol 分隔符
- * @returns 
+ * @returns
  */
 function transCamel(_str, symbol) {
   // e.g. QRCode
@@ -80,7 +80,7 @@ export default class Plugin {
      */
     this.customName = normalizeCustomName(customName);
     /**
-     * 要处理的npm包没有默认导出时设为false， 若没配置则默认是 true 
+     * 要处理的npm包没有默认导出时设为false， 若没配置则默认是 true
      */
     this.transformToDefaultImport =
       typeof transformToDefaultImport === 'undefined' ? true : transformToDefaultImport;
@@ -96,8 +96,8 @@ export default class Plugin {
 
   /**
    * 获取或初始化插件的状态对象，存储在 Babel 的 state 中。
-   * @param {*} state 
-   * @returns 
+   * @param {*} state
+   * @returns
    */
   getPluginState(state) {
     if (!state[this.pluginStateKey]) {
@@ -108,8 +108,10 @@ export default class Plugin {
 
   ProgramEnter(path, state) {
     const pluginState = this.getPluginState(state);
+    // 模块名称到本地别名的映射
     pluginState.specified = Object.create(null);
     pluginState.libraryObjs = Object.create(null);
+    // 指定导入的模块到解析后的导入路径的映射
     pluginState.selectedMethods = Object.create(null);
     pluginState.pathsToRemove = [];
   }
@@ -125,7 +127,7 @@ export default class Plugin {
    * @param {*} methodName - 引入的模块
    * @param {*} file - 当前正在处理的文件
    * @param {*} pluginState - 插件状态
-   * @returns 
+   * @returns
    */
   importMethod(methodName, file, pluginState) {
     if (!pluginState.selectedMethods[methodName]) {
@@ -222,7 +224,7 @@ export default class Plugin {
    *  无需多言
    * @param {*} path - 当前节点路径
    * @param {*} state - 插件状态
-   * @returns 
+   * @returns
    */
   ImportDeclaration(path, state) {
     const { node } = path;
@@ -240,6 +242,7 @@ export default class Plugin {
     // 该import identifier的导入源和目标包名一致，开始后续流程
     if (value === libraryName) {
       node.specifiers.forEach(spec => {
+        // 注册
         if (types.isImportSpecifier(spec)) {
           pluginState.specified[spec.local.name] = spec.imported.name;
         } else {
@@ -382,5 +385,5 @@ export default class Plugin {
   }
 
   // ============================ 处理节点的函数 ============================ //
-  
+
 }
