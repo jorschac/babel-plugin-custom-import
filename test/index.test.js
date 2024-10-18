@@ -55,7 +55,7 @@ describe('index', () => {
           plugin,
           {
             libraryName: 'plat/antd',
-            customName: name => `antd/lib/${name}`,
+            customName: name => `antd/lib/${name.toLowerCase()}`,
           },
         ];
       } else if (caseName === 'custom-name-source-file') {
@@ -145,11 +145,12 @@ describe('index', () => {
                 {
                   libraryName: 'hilojs',
                   customName(name) {
-                    switch (name) {
+                    const lowerName = name.toLowerCase()
+                    switch (lowerName) {
                       case 'class':
-                        return `hilojs/core/${name}`;
+                        return `hilojs/core/${lowerName.toLowerCase()}`;
                       default:
-                        return `hilojs/${name}`;
+                        return `hilojs/${lowerName.toLowerCase()}`;
                     }
                   },
                 },
