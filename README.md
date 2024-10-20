@@ -50,6 +50,31 @@ How to do this? See changelog below
 - [babel-loader](https://github.com/babel/babel-loader)
 
 ## Changelog
+ - new Configuration:
+   ```
+    {
+      alias: 'xx', // an alias to represent LibraryName
+      transferNameOn: true // if name of module export file is determined by module name, default is true
+    }
+   ```
+   
+   for example:
+   ```
+    {
+      libraryName: '@module/mixed-inputs'
+      alias: '@module/inputs', // an alias to represent LibraryName
+    }
+   ```
+   ```js
+
+    import DefaultImport, {NamedImport} from '@module/inputs/exports'
+
+    // will be transfered to ➡️
+
+    import _DefaultImport from '@module/mixed-inputs/lib/exports'
+    import {_NamedImport} from '@module/mixed-inputs/lib/exports'
+   
+   ```
 
 
 
