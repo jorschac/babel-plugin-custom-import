@@ -31,20 +31,26 @@ function normalizeCustomName(originCustomName) {
 }
 
 export default class Plugin {
-  constructor(
-    libraryName,
-    libraryDirectory,
-    style,
-    styleLibraryDirectory,
-    customStyleName,
-    camel2DashComponentName,
-    camel2UnderlineComponentName,
-    fileName,
-    customName,
-    transformToDefaultImport,
-    types,
-    index = 0,
-  ) {
+  constructor(param) {
+    const {
+      libraryName,
+      libraryDirectory,
+      style,
+      styleLibraryDirectory,
+      customStyleName,
+      camel2DashComponentName,
+      camel2UnderlineComponentName,
+      fileName,
+      customName,
+      transformToDefaultImport,
+      alias,
+      transferNameOn,
+      types,
+      index = 0,
+    } = param;
+    if (!types) {
+      throw new Error('types不存在', { types });
+    }
     /**
      * 目标包名，如antd
      */
@@ -92,6 +98,14 @@ export default class Plugin {
      * 每个插件实例的独立标识符
      */
     this.pluginStateKey = `importPluginState${index}`;
+    /**
+     * The alias for the library, if provided
+     */
+    this.alias = typeof alias === 'undefined' ? undefined : alias;
+    /**
+     * 是否根据导入的模块名转换导出文件名称，默认=true
+     */
+    this.transferNameOn = typeof transferNameOn === 'undefined' ? true : transferNameOn;
   }
 
   /**
@@ -132,29 +146,29 @@ export default class Plugin {
    */
   importMethod(methodName, file, pluginState) {
     if (!pluginState.selectedMethods[methodName]) {
-      const { style, libraryDirectory } = this;
-      /**
-       * 模块导出路径最末端的文件夹名，根据配置拼接而来: dropdown-button
-       */
-      const transformedMethodName = this.camel2UnderlineComponentName // eslint-disable-line
-        ? transCamel(methodName, '_')
-        : this.camel2DashComponentName
-        ? transCamel(methodName, '-')
-        : methodName;
-      /**
-       * 该模块的最终处理后的导入路径，用以替换原本的倒入路径，比如 path = 'antd/lib/dropdown-button'，用以替换 import {DropdownButton} from 'antd' 中的 'antd'
-       */
+      const { style, libraryDirectory, alias } = this;
+      let { transferNameOn } = this;
+      transferNameOn = !alias && transferNameOn;
+      let transformedMethodName = '';
+      if (transferNameOn && methodName !== 'default') {
+        transformedMethodName = this.camel2UnderlineComponentName
+          ? transCamel(methodName, '_')
+          : this.camel2DashComponentName
+          ? transCamel(methodName, '-')
+          : methodName;
+      }
+
       const path = winPath(
         this.customName
           ? this.customName(methodName, file)
-          // 否则的话，按照${libraryName}/${libraryDirectory}/${拼接后的模版导出文件的名字}/${fileName}来拼接导入路径，例如：
-          // lodash/lib/debounce
-          : join(this.libraryName, libraryDirectory, transformedMethodName, this.fileName), // eslint-disable-line
+          : join(this.libraryName, libraryDirectory, transformedMethodName, this.fileName),
       );
-      // @TODO: 需要改成默认FALSE?
-      pluginState.selectedMethods[methodName] = this.transformToDefaultImport // eslint-disable-line
-        ? addDefault(file.path, path, { nameHint: methodName })
-        : addNamed(file.path, methodName, path);
+
+      pluginState.selectedMethods[methodName] = 
+        methodName === 'default' || this.transformToDefaultImport
+          ? addDefault(file.path, path, { nameHint: methodName })
+          : addNamed(file.path, methodName, path);
+
       if (this.customStyleName) {
         const stylePath = winPath(this.customStyleName(transformedMethodName, file));
         addSideEffect(file.path, `${stylePath}`);
@@ -219,8 +233,6 @@ export default class Plugin {
 
   // ============================ 工具函数 ============================ //
 
-
-
   // ============================ 处理节点的函数 ============================ //
 
   /**
@@ -235,25 +247,31 @@ export default class Plugin {
     // path maybe removed by prev instances.
     if (!node) return;
 
-    /**
-     * 导入源
-     */
     const { value } = node.source;
-    const { libraryName } = this;
+    const { libraryName, alias } = this;
     const { types } = this;
     const pluginState = this.getPluginState(state);
-    // 该import identifier的导入源和目标包名一致，开始后续流程
-    if (value === libraryName) {
+
+    // Check if the import source matches either the libraryName or the alias
+    if (value === libraryName || (alias && value.startsWith(alias))) {
       node.specifiers.forEach(spec => {
-        // 注册
         if (types.isImportSpecifier(spec)) {
-          // 具名导入
+          // Named import
           pluginState.specified[spec.local.name] = spec.imported.name;
+        } else if (types.isImportDefaultSpecifier(spec)) {
+          // Default import
+          pluginState.specified[spec.local.name] = 'default';
         } else {
-          // 默认导入和其他
+          // Namespace import or other
           pluginState.libraryObjs[spec.local.name] = true;
         }
       });
+
+      // If an alias is used, replace it with the actual libraryName
+      if (alias && value.startsWith(alias)) {
+        node.source.value = types.StringLiteral(value.replace(alias, libraryName));
+      }
+
       pluginState.pathsToRemove.push(path);
     }
   }
@@ -392,5 +410,4 @@ export default class Plugin {
   }
 
   // ============================ 处理节点的函数 ============================ //
-
 }

@@ -60,11 +60,16 @@ export default function ({ types }) {
                 fileName,
                 customName,
                 transformToDefaultImport,
+                alias,
+                transferNameOn,
               },
               index,
             ) => {
               assert(libraryName, 'libraryName should be provided');
-              return new Plugin(
+              if (!types) {
+                throw new Error('types不存在!', { types });
+              }
+              return new Plugin({
                 libraryName,
                 libraryDirectory,
                 style,
@@ -75,27 +80,32 @@ export default function ({ types }) {
                 fileName,
                 customName,
                 transformToDefaultImport,
+                alias,
+                transferNameOn,
                 types,
                 index,
-              );
+              });
             },
           );
         } else {
           assert(opts.libraryName, 'libraryName should be provided');
           plugins = [
-            new Plugin(
-              opts.libraryName,
-              opts.libraryDirectory,
-              opts.style,
-              opts.styleLibraryDirectory,
-              opts.customStyleName,
-              opts.camel2DashComponentName,
-              opts.camel2UnderlineComponentName,
-              opts.fileName,
-              opts.customName,
-              opts.transformToDefaultImport,
+            new Plugin({
+              libraryName: opts.libraryName,
+              libraryDirectory: opts.libraryDirectory,
+              style: opts.style,
+              styleLibraryDirectory: opts.styleLibraryDirectory,
+              customStyleName: opts.customStyleName,
+              camel2DashComponentName: opts.camel2DashComponentName,
+              camel2UnderlineComponentName: opts.camel2UnderlineComponentName,
+              fileName: opts.fileName,
+              customName: opts.customName,
+              transformToDefaultImport: opts.transformToDefaultImport,
+              alias: opts.alias,
+              transferNameOn: opts.transferNameOn,
               types,
-            ),
+              index: 0,
+            }),
           ];
         }
       }
@@ -141,3 +151,4 @@ export default function ({ types }) {
 
   return ret;
 }
+

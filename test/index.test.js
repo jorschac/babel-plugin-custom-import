@@ -133,6 +133,7 @@ describe('index', () => {
             plugins: [
               [plugin, { libraryName: 'antd' }, 'antd'],
               [plugin, { libraryName: 'antd-mobile' }, 'antd-mobile'],
+              [plugin, { libraryName: 'mixed-inputs', alias: 'mixed'}, 'mixed-inputs']
             ],
           }).code;
         } else if (caseName === 'multiple-libraries-hilojs') {
